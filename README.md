@@ -46,29 +46,28 @@ The server starts at `http://localhost:3000`.
 
 ## Architecture
 
-```
-.
-├── index.ts              # Entry point — starts Bun.serve()
-├── app.ts                # Hono app setup, middleware, route mounting
-├── routes/
-│   └── expenses.ts       # Expense CRUD routes and Expense type
-├── package.json
-└── tsconfig.json
-```
+- **`server/`** — Bun + Hono REST API. Handles routing, validation, and data access.
+- **`client/`** — React SPA built with Vite. Communicates with the server via API calls.
 
-- **`index.ts`** — Creates the HTTP server with `Bun.serve()` and passes `app.fetch` as the handler.
-- **`app.ts`** — Initializes Hono, registers the logger middleware, and mounts route groups.
-- **`routes/expenses.ts`** — Defines the `Expense` type and exposes GET/POST handlers. Currently
-  uses in-memory fake data.
+Each side has its own `package.json`, `tsconfig.json`, and `node_modules`.
 
 ## Build Log
 
-- [x] Project init with `bun init`
-- [x] Add Hono as web framework
-- [x] Setup logger middleware
-- [x] Create expenses route with GET and POST
-- [x] Add request validation (Zod + @hono/zod-validator)
-- [x] Add GET by ID and DELETE endpoints
-- [ ] Add PUT endpoint
-- [ ] Add persistent storage (database)
-- [ ] Add error handling middleware
+### 1. Server setup
+
+```bash
+bun init
+bun add hono @hono/zod-validator zod
+```
+
+Created a Hono app with `Bun.serve()`, added logger middleware, and built CRUD routes for expenses
+(`GET`, `POST`, `GET /:id`, `DELETE /:id`) with Zod schema validation. Currently uses in-memory fake
+data.
+
+### 2. Client setup
+
+```bash
+bun create vite@latest client --template react-ts
+```
+
+Scaffolded a React + TypeScript app with Vite inside `client/`.
