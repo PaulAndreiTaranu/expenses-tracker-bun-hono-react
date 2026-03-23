@@ -1,23 +1,23 @@
 services:
     server:
-        container_name: expense-api
+        container_name: expenses-api
         build: ./server
         restart: unless-stopped
         networks:
             - proxy
-            - expense-tracker-net
+            - expenses-tracker-net
 
     client:
-        container_name: expense-client
+        container_name: expenses-client
         build: ./client
         restart: unless-stopped
         depends_on:
             - server
         networks:
             - proxy
-            - expense-tracker-net
+            - expenses-tracker-net
 
 networks:
     proxy:
         external: true
-    expense-tracker-net:
+    expenses-tracker-net:
