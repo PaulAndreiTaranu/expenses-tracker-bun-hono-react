@@ -2,14 +2,16 @@
 
 ## Overview
 
-REST API for tracking expenses, built with [Bun](https://bun.sh) as the runtime and
-[Hono](https://hono.dev) as the web framework. This is a learning project following a YouTube
-tutorial to explore Bun's capabilities for building APIs.
+Full-stack expense tracker built with [Bun](https://bun.sh), [Hono](https://hono.dev), and
+[React](https://react.dev). Features a REST API with Zod validation and a React SPA with Tailwind
+CSS and shadcn/ui. Containerized with Docker and deployed via Caddy reverse proxy.
 
 ### Tech Stack
 
 - **Runtime:** Bun
-- **Framework:** Hono
+- **Server:** Hono
+- **Client:** React + Vite
+- **UI:** Tailwind CSS v4 + shadcn/ui
 - **Validation:** Zod + @hono/zod-validator
 - **Language:** TypeScript
 
@@ -22,27 +24,26 @@ tutorial to explore Bun's capabilities for building APIs.
 ### Install & Run
 
 ```bash
-# Install dependencies
-bun install
+# Server
+cd server && bun install && bun run dev
 
-# Run in dev mode (with hot reload)
-bun run dev
-
-# Run in production mode
-bun run start
+# Client (separate terminal)
+cd client && bun install && bun run dev
 ```
 
-The server starts at `http://localhost:3000`.
+Server runs at `http://localhost:3002`. Client runs at `http://localhost:5173` with API requests
+proxied to the server.
 
 ### API Endpoints
 
-| Method | Endpoint               | Description          |
-| ------ | ---------------------- | -------------------- |
-| GET    | `/`                    | Health check         |
-| GET    | `/api/v1/expenses`     | List all expenses    |
-| POST   | `/api/v1/expenses`     | Create an expense    |
-| GET    | `/api/v1/expenses/:id` | Get expense by ID    |
-| DELETE | `/api/v1/expenses/:id` | Delete expense by ID |
+| Method | Endpoint                        | Description          |
+| ------ | ------------------------------- | -------------------- |
+| GET    | `/`                             | Health check         |
+| GET    | `/api/v1/expenses`              | List all expenses    |
+| GET    | `/api/v1/expenses/total-spent`  | Get total spent      |
+| POST   | `/api/v1/expenses`              | Create an expense    |
+| GET    | `/api/v1/expenses/:id`          | Get expense by ID    |
+| DELETE | `/api/v1/expenses/:id`          | Delete expense by ID |
 
 ## Architecture
 
@@ -71,3 +72,14 @@ bun create vite@latest client --template react-ts
 ```
 
 Scaffolded a React + TypeScript app with Vite inside `client/`.
+
+### 3. UI and API integration
+
+```bash
+cd client
+bun add tailwindcss @tailwindcss/vite
+bunx --bun shadcn@latest init
+```
+
+Added Tailwind CSS v4 and shadcn/ui components. Connected the client to the Hono API via Vite's dev
+proxy and `fetch` calls. Displays total expenses spent using a shadcn Card component.

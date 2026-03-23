@@ -21,6 +21,10 @@ export const expensesRoute = new Hono()
     .get('/', async (c) => {
         return c.json({ expenses: fakeExpenses })
     })
+    .get('/total-spent', async (c) => {
+        const total = fakeExpenses.reduce((acc, expense) => acc + expense.amount, 0)
+        return c.json({ total })
+    })
     .post('/', zValidator('json', createPostSchema), async (c) => {
         const expense = c.req.valid('json')
         fakeExpenses.push({ ...expense, id: crypto.randomUUID() })
