@@ -5,7 +5,8 @@
 
       handle {
           root * /srv
-          try_files {path} /index.html
+          encode gzip
           file_server
+          try_files {path} /index.html
       }
   }
