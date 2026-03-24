@@ -4,8 +4,10 @@ services:
         container_name: expenses-tracker-api
         build: ./api
         restart: unless-stopped
+        ports:
+            - '3002:3002'
         networks:
-            - proxy
+            # - proxy
             - expenses-tracker-net
 
     client:
@@ -16,11 +18,13 @@ services:
         restart: unless-stopped
         depends_on:
             - api
+        ports:
+            - '3080:80'
         networks:
-            - proxy
+            # - proxy
             - expenses-tracker-net
 
 networks:
-    proxy:
-        external: true
+    # proxy:
+    #     external: true
     expenses-tracker-net:

@@ -1,14 +1,15 @@
 FROM oven/bun:1 AS build
 WORKDIR /app
 
-COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
+COPY client/package.json client/bun.lock ./client/
+RUN cd client && bun install --frozen-lockfile
 
-COPY . .
-RUN bun run build
+COPY client/ ./client/
+COPY server/ ./server/
+RUN cd client && bun run build
 
 FROM caddy:2-alpine
-COPY --from=build /app/dist /srv
-COPY Caddyfile /etc/caddy/Caddyfile
+COPY --from=build /app/client/dist /srv
+COPY client/Caddyfile /etc/caddy/Caddyfile
 
 EXPOSE 80

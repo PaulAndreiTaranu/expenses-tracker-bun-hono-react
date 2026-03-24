@@ -1,4 +1,4 @@
-# Expense Tracker (Bun + Hono)
+# Expenses Tracker (Bun + Hono)
 
 ## Overview
 
@@ -36,14 +36,14 @@ proxied to the server.
 
 ### API Endpoints
 
-| Method | Endpoint                        | Description          |
-| ------ | ------------------------------- | -------------------- |
-| GET    | `/`                             | Health check         |
-| GET    | `/api/v1/expenses`              | List all expenses    |
-| GET    | `/api/v1/expenses/total-spent`  | Get total spent      |
-| POST   | `/api/v1/expenses`              | Create an expense    |
-| GET    | `/api/v1/expenses/:id`          | Get expense by ID    |
-| DELETE | `/api/v1/expenses/:id`          | Delete expense by ID |
+| Method | Endpoint                       | Description          |
+| ------ | ------------------------------ | -------------------- |
+| GET    | `/`                            | Health check         |
+| GET    | `/api/v1/expenses`             | List all expenses    |
+| GET    | `/api/v1/expenses/total-spent` | Get total spent      |
+| POST   | `/api/v1/expenses`             | Create an expense    |
+| GET    | `/api/v1/expenses/:id`         | Get expense by ID    |
+| DELETE | `/api/v1/expenses/:id`         | Delete expense by ID |
 
 ## Architecture
 
