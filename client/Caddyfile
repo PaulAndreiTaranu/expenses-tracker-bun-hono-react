@@ -1,6 +1,6 @@
  :80 {
       handle /api/* {
-          reverse_proxy server:3002
+          reverse_proxy expenses-tracker-api:3002
       }
 
       handle {

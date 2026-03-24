@@ -5,7 +5,7 @@ COPY client/package.json client/bun.lock ./client/
 RUN cd client && bun install --frozen-lockfile
 
 COPY client/ ./client/
-COPY server/ ./server/
+COPY api/ ./api/
 RUN cd client && bun run build
 
 FROM caddy:2-alpine

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { hc } from 'hono/client'
 import { useEffect, useState } from 'react'
-import { type ApiRoutes } from '../../server/app'
+import { type ApiRoutes } from '../../api/app'
 
 function App() {
     const [totalSpent, setTotalSpent] = useState(0)
