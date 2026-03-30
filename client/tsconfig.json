@@ -7,7 +7,8 @@
         "skipLibCheck": true,
         "baseUrl": ".",
         "paths": {
-            "@/*": ["./src/*"]
+            "@/*": ["./src/*"],
+            "@api/*": ["../api/*"]
         },
 
         /* Bundler mode */
@@ -26,5 +27,5 @@
         "noFallthroughCasesInSwitch": true,
         "noUncheckedSideEffectImports": true
     },
-    "include": ["src", "vite.config.ts", "../../api/app.ts"]
+    "include": ["src", "vite.config.ts", "../api/app.ts"]
 }

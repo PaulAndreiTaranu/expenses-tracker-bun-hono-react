@@ -1,21 +1,26 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { hc } from 'hono/client'
 import { useEffect, useState } from 'react'
-import { type ApiRoutes } from '../../api/app'
+import { api } from './lib/api'
+import { useQuery } from '@tanstack/react-query'
 
 function App() {
     const [totalSpent, setTotalSpent] = useState(0)
-    const client = hc<ApiRoutes>('/')
 
-    useEffect(() => {
-        async function fetchTotal() {
-            const res = await client.api.v1.expenses['total-spent'].$get()
-            const data = await res.json()
-            setTotalSpent(data.total)
+    async function getTotalSpent() {
+        const res = await api.v1.expenses['total-spent'].$get()
+        if (!res.ok) {
+            throw new Error('server errro')
         }
+        const data = await res.json()
+        return data
+    }
 
-        fetchTotal()
-    }, [])
+    const { isPending, error, data, isFetching } = useQuery({
+        queryKey: ['get-total-spent'],
+        queryFn: getTotalSpent,
+    })
+
+    if (error) return 'An error has occured: ' + error.message
 
     return (
         <Card className='w-3xl mx-auto mt-10'>
@@ -24,7 +29,7 @@ function App() {
                 <CardDescription>The total amount that you've spent</CardDescription>
             </CardHeader>
             <CardContent>
-                <p>{totalSpent}</p>
+                <p>{isPending ? '...' : data.total}</p>
             </CardContent>
         </Card>
     )

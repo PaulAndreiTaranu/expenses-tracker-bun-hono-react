@@ -1,30 +1,8 @@
 name: expenses-tracker
 services:
-    api:
-        container_name: expenses-tracker-api
-        build: ./api
+    app:
+        container_name: expenses-tracker-app
+        build: .
         restart: unless-stopped
         ports:
             - '3002:3002'
-        networks:
-            # - proxy
-            - expenses-tracker-net
-
-    client:
-        container_name: expenses-tracker-client
-        build:
-            context: .
-            dockerfile: client/Dockerfile
-        restart: unless-stopped
-        depends_on:
-            - api
-        ports:
-            - '3080:80'
-        networks:
-            # - proxy
-            - expenses-tracker-net
-
-networks:
-    # proxy:
-    #     external: true
-    expenses-tracker-net:
