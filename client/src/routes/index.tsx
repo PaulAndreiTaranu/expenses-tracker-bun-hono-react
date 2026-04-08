@@ -1,3 +1,4 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/')({
@@ -6,8 +7,12 @@ export const Route = createFileRoute('/')({
 
 function Index() {
     return (
-        <div className='p-2'>
-            <h3>Welcome Home!</h3>
-        </div>
+        <Card className='w-3xl mx-auto mt-10'>
+            <CardHeader>
+                <CardTitle>Total Spent</CardTitle>
+                <CardDescription>The total amount that you've spent</CardDescription>
+            </CardHeader>
+            <CardContent></CardContent>
+        </Card>
     )
 }

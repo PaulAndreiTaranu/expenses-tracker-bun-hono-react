@@ -9,8 +9,9 @@ CSS and shadcn/ui. Containerized with Docker and deployed via Caddy reverse prox
 ### Tech Stack
 
 - **Runtime:** Bun
-- **Server:** Hono
+- **Server:** Hono + Hono RPC
 - **Client:** React + Vite
+- **Data fetching:** TanStack Query + TanStack Router
 - **UI:** Tailwind CSS v4 + shadcn/ui
 - **Validation:** Zod + @hono/zod-validator
 - **Language:** TypeScript
@@ -24,8 +25,8 @@ CSS and shadcn/ui. Containerized with Docker and deployed via Caddy reverse prox
 ### Install & Run
 
 ```bash
-# Server
-cd server && bun install && bun run dev
+# API
+cd api && bun install && bun run dev
 
 # Client (separate terminal)
 cd client && bun install && bun run dev
@@ -38,7 +39,6 @@ proxied to the server.
 
 | Method | Endpoint                       | Description          |
 | ------ | ------------------------------ | -------------------- |
-| GET    | `/`                            | Health check         |
 | GET    | `/api/v1/expenses`             | List all expenses    |
 | GET    | `/api/v1/expenses/total-spent` | Get total spent      |
 | POST   | `/api/v1/expenses`             | Create an expense    |
@@ -47,10 +47,13 @@ proxied to the server.
 
 ## Architecture
 
-- **`server/`** — Bun + Hono REST API. Handles routing, validation, and data access.
-- **`client/`** — React SPA built with Vite. Communicates with the server via API calls.
+- **`api/`** — Bun + Hono REST API. Handles routing, validation, and data access. In production,
+  also serves the built client as static files.
+- **`client/`** — React SPA built with Vite. Uses Hono RPC for type-safe API calls and TanStack
+  Query for data fetching.
 
-Each side has its own `package.json`, `tsconfig.json`, and `node_modules`.
+Each side has its own `package.json`, `tsconfig.json`, and `node_modules`. Deployed as a single
+Docker container where Hono serves both the API and the static client build.
 
 ## Build Log
 
@@ -83,3 +86,20 @@ bunx --bun shadcn@latest init
 
 Added Tailwind CSS v4 and shadcn/ui components. Connected the client to the Hono API via Vite's dev
 proxy and `fetch` calls. Displays total expenses spent using a shadcn Card component.
+
+### 4. Hono RPC and TanStack
+
+```bash
+cd client
+bun add hono @tanstack/react-query @tanstack/react-router
+```
+
+Added Hono RPC (`hono/client`) for end-to-end type safety between API and client. Replaced raw
+`fetch` calls with TanStack Query for caching and data fetching. Added TanStack Router for
+client-side routing.
+
+### 5. Docker refactor to single container
+
+Consolidated from two containers (API + Caddy) into one. Hono now serves the built React client as
+static files via `serveStatic`. Single `Dockerfile` at the root builds the client with Vite, then
+runs the Bun API server with the client `dist/` bundled in.
