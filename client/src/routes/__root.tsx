@@ -17,6 +17,12 @@ const NavBar = () => {
                 <Link to='/about' className='[&.active]:font-bold'>
                     About
                 </Link>
+                <Link to='/signin' className='[&.active]:font-bold'>
+                    Sign In
+                </Link>
+                <Link to='/signup' className='[&.active]:font-bold'>
+                    Sign Up
+                </Link>
             </div>
         </nav>
     )

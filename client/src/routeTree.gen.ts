@@ -9,11 +9,23 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SigninRouteImport } from './routes/signin'
 import { Route as ExpensesRouteImport } from './routes/expenses'
 import { Route as CreateExpenseRouteImport } from './routes/create-expense'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SigninRoute = SigninRouteImport.update({
+  id: '/signin',
+  path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ExpensesRoute = ExpensesRouteImport.update({
   id: '/expenses',
   path: '/expenses',
@@ -40,12 +52,16 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/create-expense': typeof CreateExpenseRoute
   '/expenses': typeof ExpensesRoute
+  '/signin': typeof SigninRoute
+  '/signup': typeof SignupRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/create-expense': typeof CreateExpenseRoute
   '/expenses': typeof ExpensesRoute
+  '/signin': typeof SigninRoute
+  '/signup': typeof SignupRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +69,28 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/create-expense': typeof CreateExpenseRoute
   '/expenses': typeof ExpensesRoute
+  '/signin': typeof SigninRoute
+  '/signup': typeof SignupRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/create-expense' | '/expenses'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/create-expense'
+    | '/expenses'
+    | '/signin'
+    | '/signup'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/create-expense' | '/expenses'
-  id: '__root__' | '/' | '/about' | '/create-expense' | '/expenses'
+  to: '/' | '/about' | '/create-expense' | '/expenses' | '/signin' | '/signup'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/create-expense'
+    | '/expenses'
+    | '/signin'
+    | '/signup'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,10 +98,26 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   CreateExpenseRoute: typeof CreateExpenseRoute
   ExpensesRoute: typeof ExpensesRoute
+  SigninRoute: typeof SigninRoute
+  SignupRoute: typeof SignupRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signin': {
+      id: '/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof SigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/expenses': {
       id: '/expenses'
       path: '/expenses'
@@ -107,6 +154,8 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   CreateExpenseRoute: CreateExpenseRoute,
   ExpensesRoute: ExpensesRoute,
+  SigninRoute: SigninRoute,
+  SignupRoute: SignupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

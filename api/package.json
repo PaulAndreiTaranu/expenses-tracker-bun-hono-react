@@ -4,18 +4,24 @@
     "type": "module",
     "private": true,
     "scripts": {
-        "start": "bun index.ts",
-        "dev": "bun --watch index.ts"
+        "start": "bun --env-file=../.env index.ts",
+        "dev": "bun --watch --env-file=../.env index.ts",
+        "db:generate": "export $(cat ../.env | xargs) && bunx @better-auth/cli generate",
+        "db:migrate": "export $(cat ../.env | xargs) && bunx @better-auth/cli migrate"
     },
     "devDependencies": {
-        "@types/bun": "latest"
+        "@types/bun": "latest",
+        "@types/pg": "^8.20.0"
     },
     "peerDependencies": {
         "typescript": "^5"
     },
     "dependencies": {
         "@hono/zod-validator": "^0.7.6",
+        "better-auth": "^1.6.0",
         "hono": "4.12.8",
+        "hono-rate-limiter": "^0.5.3",
+        "pg": "^8.20.0",
         "zod": "^4.3.6"
     }
 }

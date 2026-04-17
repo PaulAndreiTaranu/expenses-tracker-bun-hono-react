@@ -17,4 +17,4 @@ COPY api/ .
 COPY --from=client-build /app/client/dist ./client/dist
 
 EXPOSE 3002
-CMD ["bun", "run", "start"]
+CMD ["bun", "index.ts"]

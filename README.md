@@ -12,8 +12,10 @@ CSS and shadcn/ui. Containerized with Docker and deployed via Caddy reverse prox
 - **Server:** Hono + Hono RPC
 - **Client:** React + Vite
 - **Data fetching:** TanStack Query + TanStack Router
+- **Forms:** TanStack Form
 - **UI:** Tailwind CSS v4 + shadcn/ui
 - **Validation:** Zod + @hono/zod-validator
+- **Database:** PostgreSQL
 - **Language:** TypeScript
 
 ## Get Started
