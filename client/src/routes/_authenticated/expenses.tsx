@@ -11,7 +11,7 @@ import {
     TableRow,
 } from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
-export const Route = createFileRoute('/expenses')({
+export const Route = createFileRoute('/_authenticated/expenses')({
     component: Expenses,
 })
 
@@ -19,7 +19,7 @@ function Expenses() {
     async function getAllExpenses() {
         const res = await api.v1.expenses.$get()
         if (!res.ok) {
-            throw new Error('server errro')
+            throw new Error('server error')
         }
         const data = await res.json()
         return data

@@ -3,6 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { authClient } from '@/lib/auth-client.tsx'
+import { userQueryOptions } from '@/lib/auth-query'
+import { queryClient } from '@/lib/query-client'
 import { useForm } from '@tanstack/react-form'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 
@@ -18,9 +20,13 @@ function SignIn() {
             password: '',
         },
         onSubmit: async ({ value }) => {
-            await authClient.signIn.email({
+            const { error } = await authClient.signIn.email({
                 email: value.email,
                 password: value.password,
+            })
+            if (error) return
+            await queryClient.invalidateQueries({
+                queryKey: userQueryOptions.queryKey,
             })
             navigate({ to: '/' })
         },

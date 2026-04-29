@@ -34,20 +34,8 @@ if (process.env.NODE_ENV === 'development') {
         }),
     )
 }
-app.use('/api/v1/*', async (c, next) => {
-    const session = await auth.api.getSession({ headers: c.req.raw.headers })
-    if (!session) {
-        return c.json({ error: 'Unauthorized' }, 401)
-    }
-    c.set('user', session.user)
-    c.set('session', session.session)
-    await next()
-})
 const apiRoutes = app.route('/api/v1/expenses', expensesRoute)
-app.on(['GET', 'POST'], '/api/auth/*', (c) => {
-    return auth.handler(c.req.raw)
-})
-
+app.on(['GET', 'POST'], '/api/auth/*', (c) => auth.handler(c.req.raw))
 app.use('/*', serveStatic({ root: './client/dist' }))
 app.get('/*', serveStatic({ root: './client/dist', path: '/index.html' }))
 
