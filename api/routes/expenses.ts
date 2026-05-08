@@ -2,59 +2,64 @@ import { zValidator } from '@hono/zod-validator'
 import { Hono } from 'hono'
 import * as z from 'zod'
 import { AuthMiddleware } from '../middleware/auth.middleware'
+import { db } from '../lib/db'
+import { expenses } from '../lib/schema'
+import { and, desc, eq, sum } from 'drizzle-orm'
 
-const expenseSchema = z.object({
-    id: z.uuid(),
-    userId: z.uuid(),
+const createPostSchema = z.object({
     title: z.string().min(3).max(100),
     amount: z.number().int().positive(),
 })
-const createPostSchema = expenseSchema.omit({ id: true, userId: true })
-type Expense = z.infer<typeof expenseSchema>
-
-const fakeExpenses: Expense[] = [
-    { id: crypto.randomUUID(), userId: crypto.randomUUID(), title: 'Groceries', amount: 200 },
-    { id: crypto.randomUUID(), userId: crypto.randomUUID(), title: 'Utilities', amount: 20 },
-    { id: crypto.randomUUID(), userId: crypto.randomUUID(), title: 'Rent', amount: 720 },
-    { id: crypto.randomUUID(), userId: crypto.randomUUID(), title: 'Claude', amount: 18 },
-]
 
 export const expensesRoute = new Hono()
     .use(AuthMiddleware)
     .get('/', async (c) => {
         const user = c.get('user')
-        const expenses = fakeExpenses.filter((e) => e.userId === user.id)
-        return c.json({ expenses })
+        const rows = await db
+            .select()
+            .from(expenses)
+            .where(eq(expenses.userId, user.id))
+            .orderBy(desc(expenses.createdAt))
+        return c.json({ expenses: rows })
     })
     .get('/total-spent', async (c) => {
         const user = c.get('user')
-        const total = fakeExpenses
-            .filter((e) => e.userId === user.id)
-            .reduce((acc, expense) => acc + expense.amount, 0)
+        const result = await db
+            .select({ total: sum(expenses.amount) })
+            .from(expenses)
+            .where(eq(expenses.userId, user.id))
+        const total = Number(result[0]?.total ?? 0)
         return c.json({ total })
     })
     .post('/', zValidator('json', createPostSchema), async (c) => {
         const user = c.get('user')
         const input = c.req.valid('json')
-        const expense: Expense = { ...input, id: crypto.randomUUID(), userId: user.id }
-        fakeExpenses.push(expense)
+        const [expense] = await db
+            .insert(expenses)
+            .values({ ...input, userId: user.id })
+            .returning()
         c.status(201)
         return c.json(expense)
     })
     .get('/:id{[0-9a-f-]+}', async (c) => {
         const user = c.get('user')
         const id = c.req.param('id')
-        const expense = fakeExpenses.find((e) => e.id === id && e.userId === user.id)
+        const [expense] = await db
+            .select()
+            .from(expenses)
+            .where(and(eq(expenses.id, id), eq(expenses.userId, user.id)))
         if (!expense) return c.notFound()
         return c.json({ expense })
     })
     .delete('/:id{[0-9a-f-]+}', async (c) => {
-        const id = c.req.param('id')
         const user = c.get('user')
-        const index = fakeExpenses.findIndex((e) => e.id === id && e.userId === user.id)
-        if (index === -1) return c.notFound()
-        const deletedExpense = fakeExpenses.splice(index, 1)[0]
+        const id = c.req.param('id')
+        const [deleted] = await db
+            .delete(expenses)
+            .where(and(eq(expenses.id, id), eq(expenses.userId, user.id)))
+            .returning()
+        if (!deleted) return c.notFound()
 
         c.status(200)
-        return c.json({ deletedExpense })
+        return c.json({ deletedExpense: deleted })
     })

@@ -2,9 +2,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { authClient } from '@/lib/auth-client.tsx'
-import { userQueryOptions } from '@/lib/auth-query'
-import { queryClient } from '@/lib/query-client'
+import { betterSignUp } from '@/lib/auth-query'
 import { useForm } from '@tanstack/react-form'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 
@@ -21,15 +19,7 @@ function SignUp() {
             password: '',
         },
         onSubmit: async ({ value }) => {
-            const { error } = await authClient.signUp.email({
-                name: value.name,
-                email: value.email,
-                password: value.password,
-            })
-            if (error) return
-            await queryClient.invalidateQueries({
-                queryKey: userQueryOptions.queryKey,
-            })
+            await betterSignUp(value.name, value.email, value.password)
             navigate({ to: '/' })
         },
     })

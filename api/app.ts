@@ -4,7 +4,7 @@ import { serveStatic } from 'hono/bun'
 import { cors } from 'hono/cors'
 import { logger } from 'hono/logger'
 import { secureHeaders } from 'hono/secure-headers'
-import { auth } from './auth'
+import { auth } from './lib/auth'
 import { expensesRoute } from './routes/expenses'
 
 type Variables = {

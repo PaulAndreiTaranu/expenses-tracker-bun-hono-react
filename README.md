@@ -17,6 +17,7 @@ CSS and shadcn/ui. Containerized with Docker and deployed via Caddy reverse prox
 - **Validation:** Zod + @hono/zod-validator
 - **Auth:** Better Auth (email + password)
 - **Database:** PostgreSQL
+- **ORM:** Drizzle ORM
 - **Language:** TypeScript
 
 ## Get Started
@@ -37,6 +38,39 @@ cd client && bun install && bun run dev
 
 Server runs at `http://localhost:3002`. Client runs at `http://localhost:5173` with API requests
 proxied to the server.
+
+### Database setup
+
+The project has **two independent migration systems** sharing one Postgres database:
+
+- **Better Auth** manages `user`, `session`, `account`, `verification` (auth-related tables).
+  Driven by its own CLI; SQL output lives in `api/better-auth_migrations/`.
+- **Drizzle** manages app-level tables (`expenses`, and any future ones). Schema is in
+  `api/lib/schema.ts`, SQL output in `api/lib/drizzle/`.
+
+Whenever you spin up a fresh Postgres volume — first time, after `docker compose down -v`, after
+switching machines — apply **both** migrations before sign-up/sign-in or expense routes will work,
+otherwise you'll see `relation "user" does not exist` or `relation "expenses" does not exist`:
+
+```bash
+cd api
+bun run db:auth:migrate   # Better Auth tables
+bun run db:migrate        # Drizzle tables
+```
+
+Re-run only the relevant one when its source of truth changes:
+
+```bash
+# After editing api/lib/auth.ts (e.g. new additionalFields)
+cd api
+bun run db:auth:generate
+bun run db:auth:migrate
+
+# After editing api/lib/schema.ts (e.g. new column or table)
+cd api
+bun run db:generate
+bun run db:migrate
+```
 
 ### API Endpoints
 
@@ -60,6 +94,18 @@ All `/api/v1/*` routes require an authenticated session (cookie set by Better Au
 
 Each side has its own `package.json`, `tsconfig.json`, and `node_modules`. Deployed as a single
 Docker container where Hono serves both the API and the static client build.
+
+### `api/` layout
+
+- `app.ts` / `index.ts` — Hono app and Bun server entry.
+- `routes/` — route modules (e.g. `expenses.ts`).
+- `middleware/` — factory-pattern Hono middleware (e.g. `auth.middleware.ts`).
+- `lib/` — shared library code:
+  - `auth.ts` — Better Auth instance.
+  - `db.ts` — Drizzle client (singleton `Pool` + `drizzle()`).
+  - `schema.ts` — Drizzle table definitions.
+  - `drizzle/` — Drizzle SQL output.
+- `better-auth_migrations/` — Better Auth's CLI output (separate from Drizzle's).
 
 ### Auth Flow (Better Auth)
 
@@ -230,3 +276,87 @@ const client = hc<ApiType>(import.meta.env.VITE_API_URL || '/', {
   isn't same-origin — including the Vite dev server.
 - The Better Auth schema must be migrated before sign-in works, otherwise Postgres throws
   `relation "user" does not exist`.
+
+### 8. Authenticated routes and per-user data
+
+Built on top of Better Auth: route guards on the client, ownership scoping on the server, role
+groundwork for future authorization.
+
+**Server side:**
+
+- Refactored auth into a factory-pattern Hono middleware (`hono/factory`'s `createMiddleware`)
+  applied per-route in `expensesRoute.use(AuthMiddleware)` instead of a blanket `/api/v1/*` rule.
+  Types for `c.get('user')` and `c.get('session')` travel with the middleware.
+- Added a `role` field to the `user` table via Better Auth `additionalFields` (`required: true`,
+  `defaultValue: 'user'`, `input: false` so users can't self-promote on sign-up).
+- Scoped every expense route by `c.get('user').id`. `GET /:id` and `DELETE /:id` filter on
+  ownership and return 404 (not 403) for non-owners to avoid leaking that the ID exists.
+
+**Client side:**
+
+```bash
+cd client
+bun add @tanstack/react-query
+```
+
+- Wrapped `authClient.getSession()` in a TanStack Query (`userQueryOptions`) with
+  `staleTime: Infinity` — single source of truth for the current user, fetched once per session
+  and cached until invalidated.
+- Added `inferAdditionalFields<typeof auth>()` plugin on the Better Auth client so `session.user`
+  gains the `role` field via type inference from the server config.
+- Created a pathless `_authenticated` layout route (`client/src/routes/_authenticated.tsx`) whose
+  `beforeLoad` calls `queryClient.ensureQueryData(userQueryOptions)` and redirects to `/signin` if
+  no session. All protected routes live under `client/src/routes/_authenticated/` and inherit the
+  guard automatically.
+- Added a `/profile` route that displays user details from the session cache.
+- Added a `LogoutButton` that calls `authClient.signOut()` and clears the cache via
+  `queryClient.setQueryData(userQueryOptions.queryKey, null)`.
+- Conditional NavBar that reads `useQuery(userQueryOptions)` and renders signin/signup links or
+  protected links + logout based on auth state.
+
+**Cache mutation pattern:** sign-in / sign-up `invalidateQueries` (refetch from `getSession`),
+sign-out `setQueryData(..., null)` (instant clear, no round-trip).
+
+**Gotcha:** public routes (`/signin`, `/signup`, `/`) must live **outside** `_authenticated/`.
+If they're inside, the unauthenticated redirect targets the same guarded layout and you get an
+infinite redirect loop (silent — no console error, just a blank page).
+
+### 9. Drizzle ORM for app-level tables
+
+```bash
+cd api
+bun add drizzle-orm
+bun add -d drizzle-kit
+```
+
+Reorganized `api/` so library code lives under `lib/`:
+
+```
+api/lib/
+├── auth.ts          # Better Auth instance (moved from api/auth.ts)
+├── db.ts            # Drizzle client (singleton Pool + drizzle())
+├── schema.ts        # Drizzle table definitions
+└── drizzle/         # Drizzle SQL output
+```
+
+Created `api/drizzle.config.ts` pointing at `lib/schema.ts` and `lib/drizzle/`. Defined the
+`expenses` table in `lib/schema.ts` with `id` (uuid, default random), `userId` (varchar, no FK
+because the `user` table is owned by Better Auth), `title`, `amount`, and `createdAt`.
+
+Renamed migration scripts to keep the two systems separate:
+
+- `db:auth:generate` / `db:auth:migrate` — Better Auth (was `db:generate` / `db:migrate`).
+- `db:generate` / `db:migrate` / `db:studio` — Drizzle.
+
+Replaced the in-memory `fakeExpenses` array in `routes/expenses.ts` with Drizzle queries
+(`db.select().from(expenses).where(eq(expenses.userId, user.id))`, etc.). Response shapes are
+unchanged so the client's Hono RPC types kept working without edits.
+
+**Notes:**
+
+- Both migration tools share the same `DATABASE_URL` but never touch each other's tables. Don't
+  add Better Auth tables to the Drizzle schema — both tools would think they own them.
+- `bun --env-file=...` doesn't propagate env to `bunx <tool>` reliably. The `db:*` scripts use
+  `export $(cat ../.env | xargs) && bunx ...` instead, the same pattern Better Auth's scripts use.
+- Drizzle's `sum()` returns a string (Postgres `NUMERIC` can overflow JS `Number`); coerce with
+  `Number(result[0]?.total ?? 0)`.

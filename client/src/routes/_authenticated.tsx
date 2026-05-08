@@ -6,7 +6,7 @@ export const Route = createFileRoute('/_authenticated')({
     beforeLoad: async ({}) => {
         const data = await queryClient.ensureQueryData(userQueryOptions)
         if (!data) throw redirect({ to: '/signin' })
-        return { user: data.user }
+        return
     },
     component: Outlet,
 })
